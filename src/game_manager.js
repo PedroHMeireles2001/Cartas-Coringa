@@ -17,6 +17,8 @@ function createPlayer(nick) {
   return {
     id: gerarNumeroAleatorio(1000, 9999), // Random ID for the player
     nick: nick,
+    isJudge: false,
+    isHost: false,
     hand: [],
   };
 }
@@ -28,28 +30,20 @@ function createGame(player){
   const host = createPlayer(player);
   const game = {
     id: genCode(),
-    players: [{...host,isHost:true}],
+    players: [{...host,isHost:true,isJudge:true,score:0}],
     state: 'waiting',
     blackDeck: shuffledBlackDeck,
     whiteDeck: shuffledWhiteDeck,
+    turn: 0
   };
   
   games.push(game);
-  return game;
+  return { game, host };
 }
 
 function startGame(code){
-  const game = games.find(g => g.code === code);
-  if (!game) {
-    return null; // Game not found
-  }
-  if (game.state !== 'waiting') {
-    return null; // Game already started
-  }
-  if(game.players.length < 3) {
-    return null; // Not enough players to start the game
-  }
-  for(player of game.players) {
+  const game = getGame(code);
+  for(let player of game.players) {
     // Initialize player hand with 10 white cards
     player.hand = [];
     for (let i = 0; i < 10; i++) {
@@ -57,7 +51,10 @@ function startGame(code){
     }
   }
   game.state = 'started';
-
+  game.table = {
+    blackCard: game.blackDeck.pop(), // Draw a black card for the table
+    whiteCards: [], // Will hold the white cards played by players
+  };
   
   return game;
 }
@@ -72,4 +69,17 @@ function gerarNumeroAleatorio(min, max) {
 function getGame(id) {
   return games.find(g => g.id === id);
 }
-export {games,createGame,createPlayer,getGame}
+
+function nextTurn(game,votedPlayerId) {
+  game.turn = (game.turn + 1) % game.players.length;
+  const currentPlayer = game.players[game.turn];
+  const votedPlayer = game.players.find(p => p.id === votedPlayerId);
+  game.table.whiteCards = []; // Clear white cards for the new turn
+  game.table.blackCard = game.blackDeck.pop(); // Draw a new black card for the new turn
+  for(let player of game.players) {
+    player.isJudge = false;
+  }
+  currentPlayer.isJudge = true;
+  votedPlayer.score = (votedPlayer.score || 0) + 1; // Increment score for the player who won the round
+}
+export {games,createGame,createPlayer,getGame,startGame,nextTurn}

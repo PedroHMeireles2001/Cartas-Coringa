@@ -1,7 +1,17 @@
-import {io} from './server.js';
 import fs from 'fs';
 
 const games = [];
+const blackDeck = fs.readFileSync('./localdb/blackDeck.txt', 'utf-8').split('\n').filter(line => line.trim() !== '');
+const whiteDeck = fs.readFileSync('./localdb/whiteDeck.txt', 'utf-8').split('\n').filter(line => line.trim() !== '');
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 
 function createPlayer(nick) {
   return {
@@ -13,19 +23,19 @@ function createPlayer(nick) {
 
 function createGame(player){
 
-  const blackDeck = fs.readFileSync('./localdb/blackDeck.json', 'utf-8').split('\n').filter(line => line.trim() !== '').shuffle();
-  const whiteDeck = fs.readFileSync('./localdb/whiteDeck.json', 'utf-8').split('\n').filter(line => line.trim() !== '').shuffle();
-
+  const shuffledBlackDeck = shuffle(blackDeck);
+  const shuffledWhiteDeck = shuffle(whiteDeck);
+  const host = createPlayer(player);
   const game = {
     id: genCode(),
-    players: [{...player,isHost:true}],
+    players: [{...host,isHost:true}],
     state: 'waiting',
-    blackDeck: blackDeck,
-    whiteDeck: whiteDeck,
+    blackDeck: shuffledBlackDeck,
+    whiteDeck: shuffledWhiteDeck,
   };
   
   games.push(game);
-  return game.code;
+  return game;
 }
 
 function startGame(code){
@@ -52,19 +62,14 @@ function startGame(code){
   return game;
 }
 
-function joinGame(player, code){
-  const game = games.find(g => g.code === code);
-  if (!game) {
-    return null; // Game not found
-  }
-  game.players.push(player);
-  return game.id;
-}
-
 function genCode() {
   return Math.random().toString(36).substring(2, 8);
 }
 function gerarNumeroAleatorio(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-export {games,createGame,createPlayer}
+
+function getGame(id) {
+  return games.find(g => g.id === id);
+}
+export {games,createGame,createPlayer,getGame}

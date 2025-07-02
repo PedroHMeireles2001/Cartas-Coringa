@@ -1,0 +1,23 @@
+.white-card {
+    background-color: #f8f9fa; /* Light background for white cards */
+    color: #343a40; /* Dark text for contrast */
+    border: 1px solid #ced4da; /* Subtle border for definition */
+    padding: 10px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.white-card:hover {
+    background-color: #e9ecef; /* Slightly darker on hover */
+}
+
+.white-card-selected {
+    background-color: #007bff; /* Highlight selected card */
+    color: white; /* Change text color for visibility */
+    border-color: #0056b3; /* Darker border for selected state */
+}
+
+.judge {
+    font-weight: bold; /* Emphasize the judge's role */
+    color: #dc3545; /* Red color for the judge */
+}

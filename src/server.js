@@ -84,7 +84,7 @@ io.on('connection', (socket) => {
       if (judge && votedPlayer && judge.isJudge && !votedPlayer.isJudge && game.table.whiteCards.length === game.players.length - 1) {
         console.log(`Judge ${judge.nick} voted for player ${votedPlayer.nick}`);
         nextTurn(game,data.votedPlayerId);
-        io.to(game.id).emit('voteUpdate', { judge: judge, votedPlayer: votedPlayer });
+        io.to(game.id).emit('voteUpdate', { judge: judge, votedPlayer: votedPlayer,nextJudge: game.players.find(p => p.isJudge) });
         io.to(game.id).emit('gameUpdate', { game });
         for(let player of game.players) {
           console.log(`Player ${player.nick} score: ${player.score}`);

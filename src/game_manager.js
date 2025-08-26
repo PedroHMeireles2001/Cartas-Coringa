@@ -76,7 +76,11 @@ function nextTurn(game,votedPlayerId) {
   const votedPlayer = game.players.find(p => p.id === votedPlayerId);
   game.table.whiteCards = []; // Clear white cards for the new turn
   game.table.blackCard = game.blackDeck.pop(); // Draw a new black card for the new turn
+  
   for(let player of game.players) {
+    if(player.hand.length < 10) {
+      player.hand.push(game.whiteDeck.pop());
+    }
     player.isJudge = false;
   }
   currentPlayer.isJudge = true;

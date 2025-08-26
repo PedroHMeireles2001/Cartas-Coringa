@@ -92,6 +92,17 @@ function updatePlayersList() {
   });
 }
 
+function updateInGamePlayersList(){
+    const ul = document.getElementById('playerList');
+    ul.innerHTML = '';
+    localGame.players.forEach(j => {
+        const li = document.createElement('li');
+        li.classList.add('list-group-item');
+        li.innerText = `${j.nick}#${j.id} (${j.score})`;
+        ul.appendChild(li);
+    });
+}
+
 function updateGameCode() {
   const gameCodeElement = document.getElementById('gameCode');
   if (gameCodeElement) {
@@ -127,38 +138,29 @@ socket.on('gameUpdate', (data) => {
 
 socket.on('voteUpdate', (data) => {
     alert(`Judge ${data.judge.nick} voted for player ${data.votedPlayer.nick}`);
-    if (data.nextJudge) {
-        localPlayer.isJudge = data.nextJudge.id === localPlayer.id;
-        localPlayer.sended = false; // Reset the card played status for the next round
-        localGame.players.map(p => {
-            p.isJudge = p.id === data.nextJudge.id;
-        });
-        console.log(`Next judge is: ${data.nextJudge.nick}`);
-    }
 });
 
 function updateGame(data){
-    localGame.players = data.game.players;
     localGame.table = data.game.table;
     localPlayer.hand = data.game.players.find(p => p.id === localPlayer.id).hand || [];
-     if(data.game.players.find(p => p.id === localPlayer.id).isJudge) {
-         localPlayer.isJudge = true;
-     }
+    if(data.game.players.find(p => p.id === localPlayer.id).isJudge) {
+        localPlayer.isJudge = true;
+    }
     console.log('Local player hand:', localPlayer.hand);
     console.log('Game table updated:', localGame.table);
-    
     updateGameTable();
+    updateInGamePlayersList();
 }
 
 function selectCard(card) {
     if (localPlayer.hand.includes(card)) {
         selectedCard = card;
-        for(let e of document.querySelectorAll('.white-card')) {
-            e.classList.remove('selected');
-        }
-        const cardElement = document.querySelector(`.white-card:contains('${card}')`);
-        if (cardElement) {
-            cardElement.classList.add('selected');
+        for (let cardElement of document.getElementById('whiteCards').children) {
+            if (cardElement.dataset.value === selectedCard) {
+                cardElement.classList.add('border-primary');
+            } else {
+                cardElement.classList.remove('border-primary');
+            }
         }
     } else {
         alert('You cannot play this card.');
@@ -208,9 +210,14 @@ function updateGameTable() {
     if (whiteCardsElement) {
         whiteCardsElement.innerHTML = '';
         localPlayer.hand.forEach(card => {
+            console.log(card)
             const cardElement = document.createElement('div');
-            cardElement.classList.add('card', 'bg-light', 'text-dark',"white-card");
-            cardElement.innerText = card;
+            cardElement.dataset.value = card;
+            cardElement.classList.add('cardGame', 'bg-light', 'text-dark');
+            const cardText = document.createElement('p');
+            cardText.innerText = card;
+            cardText.classList.add('cardGame-text');
+            cardElement.appendChild(cardText);
             cardElement.addEventListener('click', () => selectCard(card));
             whiteCardsElement.appendChild(cardElement);
         });
@@ -221,28 +228,13 @@ function updateGameTable() {
         tableElement.innerHTML = '';
         localGame.table.whiteCards.forEach(item => {
             const cardElement = document.createElement('div');
-            cardElement.classList.add('card', 'bg-light', 'text-dark',"white-card");
+            cardElement.classList.add('cardGame', 'bg-light', 'text-dark');
             cardElement.innerText = `${item.player.nick}: ${item.card}`;
             cardElement.addEventListener('click', () => voteCard(item.player));
             if (item.revealed) {
                 cardElement.classList.add('revealed');
             }
             tableElement.appendChild(cardElement);
-        });
-    }
-
-    const playerListElement = document.getElementById('playerList');
-    if (playerListElement) {
-        playerListElement.innerHTML = '';
-        localGame.players.forEach(player => {
-            const playerElement = document.createElement('div');
-            playerElement.classList.add('player');
-            playerElement.innerText = `${player.nick}#${player.id} - ${player.score || 0}`;
-            if (player.isJudge) {
-                playerElement.classList.add('judge');
-            }
-            playerElement.addEventListener('click', () => voteCard(player));
-            playerListElement.appendChild(playerElement);
         });
     }
 }
